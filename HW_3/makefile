@@ -32,7 +32,7 @@ prog.exe: $(OBJS)
 stack.o: stack.c stack.h
 	$(CC) $(CFLAGS) -c stack.c
 
-student.o: student.c student.h
+student.o: student.c student.h stack.h
 	$(CC) $(CFLAGS) -c student.c
 
 main.o: main.c stack.h student.h
