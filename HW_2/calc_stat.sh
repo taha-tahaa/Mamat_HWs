@@ -79,8 +79,8 @@ while read line; do
     
 done <<< "$hist"
 if [[ "$sum" -eq 0 ]]; then
-	echo "$mean        $median        $min    $max	0%" >> statistics.txt
+	echo "$mean	$median	$min	$max	0%" >> statistics.txt
 else
 	((x=count*100/sum));
-    echo "$mean        $median        $min    $max	${x}%" >> statistics.txt
+    echo "$mean	$median	$min	$max	${x}%" >> statistics.txt
   fi
