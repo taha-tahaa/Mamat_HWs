@@ -4,7 +4,7 @@
 if [[ $# -ne 1 ]]; then
     echo "Wrong number of arguments" >&2
     exit 1
-elif [[ ! -e "${1}" ]]; then
+elif [[ ! -e "${1:0:6}.txt" ]]; then
     echo "Course not found" >&2
     exit 1
 elif [[ -e "${1:0:6}_stat" ]]; then
@@ -13,7 +13,7 @@ fi
 
 # create the xxxxxx_stat directory
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-fp="$SCRIPT_DIR/$1"
+fp="$SCRIPT_DIR/${1:0:6}.txt"
 dirname="${1:0:6}_stat"
 mkdir "$dirname"
 cd "$dirname"
@@ -21,7 +21,29 @@ cd "$dirname"
 # creating histogram for 10 bins
 data=$(cat "$fp")
 ((bins=10))
-echo "$data" | awk -v bins=$bins '{if($1 ==100){count[9]++;}  bin=int($1/bins); count[bin]++} END {for (i=0; i<bins; i++) print i*bins, (i+1)*bins, count[i]}' | sort -n | awk '{print $1 " - " $2 " : " $3}' >> histograma.txt
+echo "$data" | awk -v bins=$bins '{
+    if ($1 == 100) {
+        count[9]++;
+    }
+    bin = int($1 / bins);
+    count[bin]++;
+}
+END {
+    for (i = 0; i < bins-1; i++) {
+        if (count[i] == 0) {
+            print i * bins, (i + 1) * bins - 1, 0;
+        } else {
+            print i * bins, (i + 1) * bins - 1, count[i];
+        }
+	}
+     if (count[i] == 0) {
+            print i * bins, 100, 0;
+        } else {
+            print i * bins, 100, count[i];
+        }
+   
+}' |sort -n | awk '{print $1 "-" $2 "\t" $3}' >> histograma.txt
+
 
 # running the C programs to get the data to put in statistics
 gcc -g -Wall "$SCRIPT_DIR/min.c" -o min.exe
@@ -40,7 +62,7 @@ max=$(./max.exe "$fp")
 mean=$(./mean.exe "$fp") 
 median=$(./median.exe "$fp") 
 hist=$(./hist.exe "$fp")|| exit 1
-echo "$mean        $median        $min    $max" >> statistics.txt
+
 
 
 # calculating the success percentage
@@ -57,8 +79,8 @@ while read line; do
     
 done <<< "$hist"
 if [[ "$sum" -eq 0 ]]; then
-	echo "0" >> statistics.txt
+	echo "$mean        $median        $min    $max	0%" >> statistics.txt
 else
 	((x=count*100/sum));
-    echo "${x}%" >> statistics.txt
+    echo "$mean        $median        $min    $max	${x}%" >> statistics.txt
   fi
